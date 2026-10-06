@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Servicio VTC JF">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png">
+<title>Servicio VTC JF</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#17202a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:#111827;color:#fff;padding:calc(env(safe-area-inset-top) + 16px) 18px 16px}
+header h1{margin:0;font-size:24px}header p{margin:4px 0 0;color:#d1d5db;font-size:13px}
+main{max-width:680px;margin:auto;padding:14px 14px calc(30px + env(safe-area-inset-bottom))}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:13px}.tab{border:0;border-radius:12px;padding:12px 4px;background:#e5e7eb;color:#374151;font-weight:700}.tab.active{background:#fff;color:#2563eb;box-shadow:0 2px 8px #0001}
+.card{background:#fff;border-radius:18px;padding:17px;margin-bottom:13px;box-shadow:0 2px 10px #0000000a}h2{font-size:18px;margin:0 0 13px}
+label{display:block;font-size:13px;font-weight:650;color:#667085;margin-bottom:6px}input,textarea{width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:12px;font-size:16px;background:#fff}textarea{min-height:65px;resize:vertical}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.space{height:10px}
+.row{display:flex;justify-content:space-between;padding:6px 0;color:#667085}.row strong{color:#17202a}.total{font-size:34px;font-weight:800;color:#17202a}
+button{border:0;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:700;cursor:pointer}.primary{background:#2563eb;color:#fff;width:100%;padding:14px}.secondary{background:#eef4ff;color:#2563eb}.dark{background:#111827;color:#fff}.danger{background:#fff0f0;color:#b91c1c}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.hidden{display:none}.small{font-size:12px;color:#667085}
+.invoice{padding:13px 0;border-top:1px solid #e5e7eb}.invoice:first-child{border-top:0}.top{display:flex;justify-content:space-between}.badge{background:#e9f8ef;color:#16844b;border-radius:20px;padding:4px 8px;font-size:12px}
+.previewPage{background:#fff;border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:0 2px 10px #0000000a}.pdfhead{display:flex;justify-content:space-between;gap:18px;border-bottom:3px solid #111827;padding-bottom:15px}.brand{font-size:23px;font-weight:800}.muted{font-size:13px;color:#667085;line-height:1.5}.invoiceTitle{text-align:right;font-weight:800}.invoiceTable{width:100%;border-collapse:collapse;margin-top:25px}.invoiceTable th,.invoiceTable td{padding:11px 5px;border-bottom:1px solid #ddd;text-align:left}.invoiceTable th:last-child,.invoiceTable td:last-child{text-align:right}.summary{margin:20px 0 0 auto;max-width:300px}.summary div{padding:5px 0}.grand{border-top:2px solid #111827;margin-top:7px;padding-top:9px;font-size:23px;font-weight:800}.notice{background:#fff8e6;border:1px solid #f3d38a;border-radius:12px;padding:11px;font-size:13px;color:#745a12}
+</style>
+</head>
+<body>
+<header><h1>Servicio VTC JF</h1><p>Factura simplificada · IVA incluido 10 %</p></header>
+<main>
+<div id="app">
+<div class="tabs">
+<button class="tab active" data-tab="new">Nueva</button>
+<button class="tab" data-tab="history">Historial</button>
+<button class="tab" data-tab="config">Configuración</button>
+</div>
+
+<section id="new">
+<div class="card"><h2>Factura</h2><div class="grid"><div><label>Nº factura</label><input id="number" readonly></div><div><label>Fecha</label><input id="date" type="date"></div></div>
+<div class="space"></div><label>Tipo de factura</label>
+<select id="invoiceType" style="width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:12px;font-size:16px;background:#fff">
+<option value="simplificada">Factura simplificada</option>
+<option value="completa">Factura completa</option>
+</select></div>
+<div class="card"><h2>Cliente <span id="clientOptional" class="small">(opcional)</span></h2><div id="completeNotice" class="small" style="display:none;margin-bottom:10px">Para una factura completa, introduce los datos del cliente.</div><label>Nombre / empresa</label><input id="client"><div class="space"></div><label>NIF / CIF</label><input id="clientNif"><div class="space"></div><label>Dirección</label><textarea id="clientAddress"></textarea></div>
+<div class="card"><h2>Servicio</h2><label>Descripción</label><input id="concept" value="Servicio de transporte VTC"><div class="space"></div><label>Precio final con IVA incluido (€)</label><input id="price" type="number" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+<div class="card"><h2>Resumen</h2><div class="row"><span>Base imponible</span><strong id="base">0,00 €</strong></div><div class="row"><span>IVA incluido (10 %)</span><strong id="vat">0,00 €</strong></div><div class="row"><span>Total</span><strong id="total" class="total">0,00 €</strong></div><button id="preview" class="primary" style="margin-top:10px">Ver factura</button><button id="save" class="secondary" style="width:100%;margin-top:9px">Guardar factura</button></div>
+</section>
+
+<section id="history" class="hidden"><div class="card"><h2>Historial</h2><input id="search" placeholder="Buscar por factura, cliente o servicio"><div id="list" style="margin-top:8px"></div></div></section>
+
+<section id="config" class="hidden">
+<div class="card"><h2>Datos de Servicio VTC JF</h2><label>Nombre / empresa</label><input id="issuer" placeholder="Nombre de la empresa"><div class="space"></div><label>NIF / CIF</label><input id="nif"><div class="space"></div><label>Dirección</label><textarea id="address"></textarea><div class="space"></div><label>Teléfono</label><input id="phone"><div class="space"></div><label>Email</label><input id="email"></div>
+<div class="card"><h2>Numeración</h2><label>Prefijo</label><input id="prefix" value="VTC-"><div class="space"></div><label>Número inicial</label><input id="startNo" type="number" value="1"><div class="space"></div><label>Ancho de la mini impresora</label><select id="paperWidth" style="width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:12px;font-size:16px;background:#fff"><option value="58">58 mm (ticket pequeño)</option><option value="80">80 mm (ticket estándar)</option></select></div>
+<div class="card"><button id="saveConfig" class="primary">Guardar configuración</button></div>
+<div class="card"><h2>Copia de seguridad</h2><div class="actions"><button id="export" class="secondary">Exportar datos</button><button id="importBtn" class="secondary">Importar datos</button></div><input id="file" type="file" accept=".json" class="hidden"></div>
+<div class="card notice">Las facturas se guardan en este dispositivo. Conserva copias de seguridad periódicas.</div>
+</section>
+
+<section id="previewPage" class="hidden">
+<div class="actions" style="margin-bottom:10px"><button id="back" class="secondary">← Volver</button><button id="pdf" class="dark">Generar PDF</button></div>
+<div id="invoicePreview" class="previewPage"></div>
+<button id="share" class="primary">Compartir factura</button>
+</section>
+</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const money=n=>new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR"}).format(Number(n)||0);
+const today=()=>new Date().toISOString().slice(0,10);
+let invoices=JSON.parse(localStorage.getItem("vtcjf_invoices_v3")||"[]");
+let cfg=JSON.parse(localStorage.getItem("vtcjf_config_v3")||"{}");
+let current=null;
+
+function updateInvoiceTypeUI(){
+ var full=$("invoiceType").value==="completa";
+ $("clientOptional").textContent=full?"(obligatorio)":"(opcional)";
+ $("completeNotice").style.display=full?"block":"none";
+}
+function esc(v){return String(v||"").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function nextNumber(){return (cfg.prefix||"VTC-")+String((Number(cfg.startNo)||1)+invoices.length).padStart(4,"0")}
+function calc(){var t=Number($("price").value)||0,b=t/1.10,v=t-b;$("base").textContent=money(b);$("vat").textContent=money(v);$("total").textContent=money(t)}
+function persist(){localStorage.setItem("vtcjf_invoices_v3",JSON.stringify(invoices))}
+function setTab(name){
+  ["new","history","config","previewPage"].forEach(function(x){$(x).classList.toggle("hidden",x!==name)});
+  document.querySelectorAll(".tab").forEach(function(b){b.classList.toggle("active",b.dataset.tab===name)});
+  if(name==="history")renderHistory();
+}
+function reset(){
+ $("number").value=nextNumber();$("date").value=today();
+ $("invoiceType").value="simplificada";updateInvoiceTypeUI();
+ $("client").value="";$("clientNif").value="";$("clientAddress").value="";
+ $("concept").value="Servicio de transporte VTC";$("price").value="";calc();
+}
+function configLoad(){
+ $("issuer").value=cfg.issuer||"Servicio VTC JF";$("nif").value=cfg.nif||"";
+ $("address").value=cfg.address||"";$("phone").value=cfg.phone||"";$("email").value=cfg.email||"";
+ $("prefix").value=cfg.prefix||"VTC-";$("startNo").value=cfg.startNo||1;$("paperWidth").value=String(cfg.paperWidth||58);
+}
+function makeInvoiceFromForm(){
+ var t=Number($("price").value)||0;
+ if(t<=0){alert("Introduce el precio final.");return null}
+ var type=$("invoiceType").value;
+ if(type==="completa" && !$("client").value.trim()){alert("Para una factura completa debes introducir el nombre o razón social del cliente.");return null}
+ return {id:Date.now().toString(),number:$("number").value,date:$("date").value,type:type,
+ client:$("client").value,clientNif:$("clientNif").value,clientAddress:$("clientAddress").value,
+ concept:$("concept").value||"Servicio de transporte VTC",total:+t.toFixed(2),
+ base:+(t/1.10).toFixed(2),vat:+(t-t/1.10).toFixed(2)};
+}
+function invoiceMarkup(x){
+ var full=x.type==="completa";
+ var title=full?"FACTURA":"FACTURA SIMPLIFICADA";
+ var issuer=esc(cfg.issuer||"Servicio VTC JF");
+ var clientBlock=full
+   ? '<div style="margin-top:22px"><b>DATOS DEL CLIENTE</b><br>'+esc(x.client)+'<br>'+esc(x.clientNif)+(x.clientAddress?'<br>'+esc(x.clientAddress):'')+'</div>'
+   : '<div style="margin-top:22px"><b>Cliente</b><br>'+esc(x.client||"Consumidor final")+(x.clientNif?'<br>'+esc(x.clientNif):'')+(x.clientAddress?'<br>'+esc(x.clientAddress):'')+'</div>';
+ return '<div class="pdfhead"><div><div class="brand">'+issuer+'</div><div class="muted">'+esc(cfg.nif)+'<br>'+esc(cfg.address)+'<br>'+esc(cfg.phone)+' '+esc(cfg.email)+'</div></div><div class="invoiceTitle">'+title+'<br><span class="muted">Nº '+esc(x.number)+'<br>'+esc(x.date)+'</span></div></div>'+
+ clientBlock+
+ '<table class="invoiceTable"><tr><th>Descripción</th><th>Importe</th></tr><tr><td>'+esc(x.concept)+'</td><td>'+money(x.base)+'</td></tr></table>'+
+ '<div class="summary"><div>Base imponible <span style="float:right">'+money(x.base)+'</span></div><div>IVA 10 % <span style="float:right">'+money(x.vat)+'</span></div><div class="grand">TOTAL <span style="float:right">'+money(x.total)+'</span></div></div>'+
+ '<p class="muted" style="margin-top:32px">Base imponible e IVA desglosados. Tipo de IVA aplicado: 10 %.</p>';
+}
+function openPreview(x){current=x;$("invoicePreview").innerHTML=invoiceMarkup(x);setTab("previewPage");window.scrollTo(0,0)}
+function saveInvoice(){
+ var x=makeInvoiceFromForm();if(!x)return;
+ invoices.push(x);persist();alert("Factura guardada correctamente.");reset();
+}
+function renderHistory(){
+ var q=($("search").value||"").toLowerCase();
+ var arr=invoices.filter(function(x){return (x.number+" "+x.client+" "+x.concept).toLowerCase().includes(q)});
+ $("list").innerHTML=arr.length?arr.slice().reverse().map(function(x){
+ return '<div class="invoice"><div class="top"><b>'+esc(x.number)+'</b><span class="badge">'+money(x.total)+'</span></div><div>'+esc(x.client||"Consumidor final")+' · '+esc(x.concept)+'</div><div class="small">'+esc(x.date)+' · Base '+money(x.base)+' · IVA '+money(x.vat)+'</div><div class="actions" style="margin-top:8px"><button class="secondary view" data-id="'+esc(x.id)+'">Ver factura</button><button class="danger delete" data-id="'+esc(x.id)+'">Eliminar</button></div></div>';
+ }).join(""):'<div class="empty">No hay facturas.</div>';
+ document.querySelectorAll(".view").forEach(function(b){b.onclick=function(){var x=invoices.find(function(i){return i.id===b.dataset.id});if(x)openPreview(x)}});
+ document.querySelectorAll(".delete").forEach(function(b){b.onclick=function(){if(confirm("¿Eliminar esta factura?")){invoices=invoices.filter(function(i){return i.id!==b.dataset.id});persist();renderHistory()}}});
+}
+function printPDF(){
+ if(!current)return;
+ var full=current.type==="completa";
+ var width=Number(cfg.paperWidth)||58;
+ var w=window.open("","_blank");
+ if(!w){alert("El navegador ha bloqueado la ventana. Permite ventanas emergentes para generar el documento.");return}
+ var company=esc(cfg.issuer||"Servicio VTC JF");
+ if(!full){
+   var ticket='<div class="ticket">'+
+   '<div class="center brand">'+company+'</div>'+
+   '<div class="center title">FACTURA SIMPLIFICADA</div>'+
+   '<div class="line"></div><div><b>Nº:</b> '+esc(current.number)+'</div><div><b>Fecha:</b> '+esc(current.date)+'</div>'+
+   (current.client?'<div class="block"><b>Cliente:</b><br>'+esc(current.client)+(current.clientNif?'<br>NIF: '+esc(current.clientNif):'')+'</div>':'')+
+   '<div class="line"></div><div class="service"><b>'+esc(current.concept)+'</b></div>'+
+   '<div class="amountRow"><span>Base imponible</span><span>'+money(current.base)+'</span></div>'+
+   '<div class="amountRow"><span>IVA 10%</span><span>'+money(current.vat)+'</span></div>'+
+   '<div class="line"></div><div class="totalRow"><span>TOTAL</span><span>'+money(current.total)+'</span></div>'+
+   '<div class="line"></div><div class="center small">IVA incluido · Tipo de IVA 10%</div>'+
+   (cfg.nif?'<div class="center small">NIF: '+esc(cfg.nif)+'</div>':'')+
+   '<div class="center small thank">Gracias por su confianza</div></div>';
+   w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+company+' - '+esc(current.number)+'</title><style>@page{size:'+width+'mm auto;margin:0}html,body{margin:0;padding:0;background:#fff}body{font-family:Arial,sans-serif;font-size:12px;color:#000;width:'+width+'mm}.ticket{width:'+(width-6)+'mm;margin:0 auto;padding:4mm 3mm;box-sizing:border-box;overflow-wrap:anywhere}.center{text-align:center}.brand{font-size:13px;font-weight:700;margin-bottom:3px}.title{font-size:12px;font-weight:700}.line{border-top:1px dashed #000;margin:8px 0}.block{margin:7px 0}.service{margin:7px 0;line-height:1.3}.amountRow,.totalRow{display:flex;justify-content:space-between;gap:8px;margin:4px 0}.totalRow{font-size:18px;font-weight:800}.small{font-size:10px;line-height:1.4}.thank{margin-top:10px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>'+ticket+'</body></html>');
+ }else{
+   var fullHtml='<div class="fullInvoice"><div class="fullHead"><div><div class="fullBrand">'+company+'</div><div class="muted">'+esc(cfg.nif)+'<br>'+esc(cfg.address)+'<br>'+esc(cfg.phone)+' '+esc(cfg.email)+'</div></div><div class="right"><b>FACTURA</b><br>Nº '+esc(current.number)+'<br>'+esc(current.date)+'</div></div>'+
+   '<div class="clientBox"><b>DATOS DEL CLIENTE</b><br>'+esc(current.client)+'<br>'+esc(current.clientNif)+(current.clientAddress?'<br>'+esc(current.clientAddress):'')+'</div>'+
+   '<table><tr><th>Descripción</th><th>Base imponible</th></tr><tr><td>'+esc(current.concept)+'</td><td>'+money(current.base)+'</td></tr></table>'+
+   '<div class="fullSum"><div>Base imponible <span>'+money(current.base)+'</span></div><div>IVA 10 % <span>'+money(current.vat)+'</span></div><div class="grand">TOTAL <span>'+money(current.total)+'</span></div></div>'+
+   '<p class="muted">Tipo de IVA aplicado: 10 %.</p></div>';
+   w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+company+' - Factura '+esc(current.number)+'</title><style>@page{size:A4;margin:16mm}body{font-family:Arial,sans-serif;color:#17202a;margin:0}.fullInvoice{max-width:760px;margin:auto}.fullHead{display:flex;justify-content:space-between;border-bottom:3px solid #111827;padding-bottom:15px}.fullBrand{font-size:24px;font-weight:800}.muted{font-size:13px;color:#667085;line-height:1.5}.right{text-align:right;line-height:1.5}.clientBox{margin:24px 0;padding:13px;background:#f5f5f5;border-radius:5px}.fullInvoice table{width:100%;border-collapse:collapse}.fullInvoice th,.fullInvoice td{padding:11px 6px;border-bottom:1px solid #ddd;text-align:left}.fullInvoice th:last-child,.fullInvoice td:last-child{text-align:right}.fullSum{max-width:310px;margin:22px 0 0 auto}.fullSum div{padding:6px}.fullSum span{float:right}.grand{border-top:2px solid #111827;margin-top:5px;padding-top:10px;font-size:22px;font-weight:800}</style></head><body>'+fullHtml+'</body></html>');
+ }
+ w.document.close();setTimeout(function(){w.focus();w.print()},300);
+}
+async function share(){
+ if(!current)return;
+ var text="Servicio VTC JF\\nFactura simplificada "+current.number+"\\nFecha: "+current.date+"\\n"+current.concept+"\\nBase: "+money(current.base)+"\\nIVA 10%: "+money(current.vat)+"\\nTOTAL: "+money(current.total);
+ if(navigator.share){try{await navigator.share({title:"Factura "+current.number,text:text})}catch(e){}}
+ else{try{await navigator.clipboard.writeText(text);alert("Resumen copiado al portapapeles.")}catch(e){alert(text)}}
+}
+$("price").addEventListener("input",calc);
+$("invoiceType").addEventListener("change",updateInvoiceTypeUI);
+$("preview").onclick=function(){var x=makeInvoiceFromForm();if(x)openPreview(x)};
+$("save").onclick=saveInvoice;$("back").onclick=function(){setTab("new")};$("pdf").onclick=printPDF;$("share").onclick=share;
+document.querySelectorAll(".tab").forEach(function(b){b.onclick=function(){setTab(b.dataset.tab)}});
+$("search").oninput=renderHistory;
+$("saveConfig").onclick=function(){
+ cfg={issuer:$("issuer").value||"Servicio VTC JF",nif:$("nif").value,address:$("address").value,phone:$("phone").value,email:$("email").value,prefix:$("prefix").value||"VTC-",startNo:Number($("startNo").value)||1,paperWidth:Number($("paperWidth").value)||58};
+ localStorage.setItem("vtcjf_config_v3",JSON.stringify(cfg));reset();alert("Configuración guardada.");
+};
+$("export").onclick=function(){var blob=new Blob([JSON.stringify({cfg:cfg,invoices:invoices},null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="backup-servicio-vtc-jf.json";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},500)};
+$("importBtn").onclick=function(){$("file").click()};
+$("file").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.cfg)cfg=d.cfg;if(Array.isArray(d.invoices))invoices=d.invoices;localStorage.setItem("vtcjf_config_v3",JSON.stringify(cfg));persist();configLoad();renderHistory();reset();alert("Datos importados correctamente.")}catch(err){alert("El archivo no es válido.")}};r.readAsText(f)};
+
+configLoad();reset();
+if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})});}
+})();
+</script>
+</body>
+</html>

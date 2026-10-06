@@ -1,0 +1,7 @@
+SERVICIO VTC JF V8 — INSTALACIÓN OFFLINE EN iPHONE
+
+Esta versión está preparada como PWA para iPhone. Tras instalarla desde Safari y abrirla una primera vez con conexión, los archivos de la aplicación quedan almacenados para poder usarla sin Internet.
+
+IMPORTANTE: iOS no permite instalar una PWA directamente desde un ZIP o desde un archivo local. Primero hay que publicar esta carpeta en una dirección HTTPS. Después, desde Safari en el iPhone: Compartir → Añadir a pantalla de inicio → Añadir.
+
+Una vez instalada y abierta una vez, prueba activando el modo avión: la creación, historial y configuración de facturas funcionan localmente.
