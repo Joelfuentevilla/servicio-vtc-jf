@@ -148,46 +148,55 @@ function renderHistory(){
  document.querySelectorAll(".view").forEach(function(b){b.onclick=function(){var x=invoices.find(function(i){return i.id===b.dataset.id});if(x)openPreview(x)}});
  document.querySelectorAll(".delete").forEach(function(b){b.onclick=function(){if(confirm("¿Eliminar esta factura?")){invoices=invoices.filter(function(i){return i.id!==b.dataset.id});persist();renderHistory()}}});
 }
-function printPDF(){
- if(!current)return;
- var full=current.type==="completa";
- var company=esc(cfg.issuer||"Servicio VTC JF");
- var html="";
- if(!full){
-   html='<div class="ticket">'+
-   '<div class="center brand">'+company+'</div>'+
-   '<div class="center title">FACTURA SIMPLIFICADA</div>'+
-   '<div class="line"></div><div><b>Nº:</b> '+esc(current.number)+'</div><div><b>Fecha:</b> '+esc(current.date)+'</div>'+
-   (current.client?'<div class="block"><b>Cliente:</b><br>'+esc(current.client)+(current.clientNif?'<br>NIF: '+esc(current.clientNif):'')+'</div>':'')+
-   '<div class="line"></div><div class="service"><b>'+esc(current.concept)+'</b></div>'+
-   '<div class="amountRow"><span>Base imponible</span><span>'+money(current.base)+'</span></div>'+
-   '<div class="amountRow"><span>IVA 10%</span><span>'+money(current.vat)+'</span></div>'+
-   '<div class="line"></div><div class="totalRow"><span>TOTAL</span><span>'+money(current.total)+'</span></div>'+
-   '<div class="line"></div><div class="center small">IVA incluido · Tipo de IVA 10%</div>'+
-   (cfg.nif?'<div class="center small">NIF: '+esc(cfg.nif)+'</div>':'')+
-   '<div class="center small thank">Gracias por su confianza</div></div>';
- }else{
-   html='<div class="fullInvoice"><div class="fullHead"><div><div class="fullBrand">'+company+'</div><div class="muted">'+esc(cfg.nif)+'<br>'+esc(cfg.address)+'<br>'+esc(cfg.phone)+' '+esc(cfg.email)+'</div></div><div class="right"><b>FACTURA</b><br>Nº '+esc(current.number)+'<br>'+esc(current.date)+'</div></div>'+
-   '<div class="clientBox"><b>DATOS DEL CLIENTE</b><br>'+esc(current.client)+'<br>'+esc(current.clientNif)+(current.clientAddress?'<br>'+esc(current.clientAddress):'')+'</div>'+
-   '<table><tr><th>Descripción</th><th>Base imponible</th></tr><tr><td>'+esc(current.concept)+'</td><td>'+money(current.base)+'</td></tr></table>'+
-   '<div class="fullSum"><div>Base imponible <span>'+money(current.base)+'</span></div><div>IVA 10 % <span>'+money(current.vat)+'</span></div><div class="grand">TOTAL <span>'+money(current.total)+'</span></div></div>'+
-   '<p class="muted">Tipo de IVA aplicado: 10 %.</p></div>';
- }
- var pa=$("printArea");
- pa.innerHTML=html;
- pa.dataset.mode=full?"full":"ticket";
- var printStyle=document.getElementById("dynamicPrintStyle");
- if(!printStyle){printStyle=document.createElement("style");printStyle.id="dynamicPrintStyle";document.head.appendChild(printStyle)}
- var width=Number(cfg.paperWidth)||58;
- printStyle.textContent=full
-   ? "@media print{ @page{size:A4;margin:10mm} }"
-   : "@media print{ @page{size:"+width+"mm auto;margin:0} html,body{margin:0!important;padding:0!important} body.printing #printArea[data-mode=\"ticket\"]{display:block!important;width:"+width+"mm!important;max-width:"+width+"mm!important;margin:0!important;padding:0!important} }";
- document.body.classList.add("printing");
- var cleanup=function(){document.body.classList.remove("printing");pa.innerHTML="";pa.removeAttribute("data-mode");};
- window.addEventListener("afterprint",cleanup,{once:true});
- setTimeout(function(){window.print();},100);
+function pdfEscape(t){return String(t).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/\r?\n/g,' ')}
+function buildSimplePDF(lines, pageW, pageH){
+  var content='BT\n/F1 10 Tf\n';
+  var y=pageH-24;
+  lines.forEach(function(line){
+    content+='1 0 0 1 18 '+y+' Tm ('+pdfEscape(line)+' ) Tj\n';
+    y-=14;
+  });
+  content+='ET\n';
+  var objs=[];
+  objs.push('<< /Type /Catalog /Pages 2 0 R >>');
+  objs.push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  objs.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pageW+' '+pageH+'] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>');
+  objs.push('<< /Length '+content.length+' >>\nstream\n'+content+'endstream');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>');
+  var pdf='%PDF-1.4\n', offsets=[0];
+  objs.forEach(function(o,i){offsets[i+1]=pdf.length; pdf+=(i+1)+' 0 obj\n'+o+'\nendobj\n';});
+  var xref=pdf.length; pdf+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
+  for(var j=1;j<offsets.length;j++) pdf+=String(offsets[j]).padStart(10,'0')+' 00000 n \n';
+  pdf+='trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+  return new Blob([pdf],{type:'application/pdf'});
 }
-
+async function printPDF(){
+ if(!current)return;
+ var full=current.type==='completa';
+ var width=Number(cfg.paperWidth)||58;
+ var lines=[];
+ var company=cfg.issuer||'Servicio VTC JF';
+ if(!full){
+   lines=[company,'FACTURA SIMPLIFICADA','------------------------------','Nº: '+current.number,'Fecha: '+current.date];
+   if(current.client){lines.push('Cliente: '+current.client);if(current.clientNif)lines.push('NIF: '+current.clientNif);}
+   lines.push('------------------------------','Servicio: '+current.concept,'Base imponible: '+money(current.base),'IVA 10%: '+money(current.vat),'------------------------------','TOTAL: '+money(current.total),'','IVA incluido - Tipo IVA 10%');
+   if(cfg.nif)lines.push('NIF: '+cfg.nif);
+   lines.push('Gracias por su confianza');
+ }else{
+   lines=[company,'FACTURA','Nº: '+current.number,'Fecha: '+current.date,'','DATOS DEL CLIENTE',current.client,'NIF: '+(current.clientNif||''),current.clientAddress||'','------------------------------','Descripción: '+current.concept,'Base imponible: '+money(current.base),'IVA 10%: '+money(current.vat),'TOTAL: '+money(current.total),'','Tipo de IVA aplicado: 10 %.'];
+ }
+ var pageW=full?595:(width===80?227:165);
+ var pageH=full?842:Math.max(180,lines.length*14+40);
+ var blob=buildSimplePDF(lines,pageW,pageH);
+ var filename='Factura_'+current.number.replace(/[^a-z0-9_-]/gi,'_')+'.pdf';
+ var file=new File([blob],filename,{type:'application/pdf'});
+ if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+   try{await navigator.share({title:'Factura '+current.number,files:[file]});return;}catch(e){if(e && e.name==='AbortError')return;}
+ }
+ var url=URL.createObjectURL(blob);
+ var a=document.createElement('a');a.href=url;a.download=filename;a.target='_blank';document.body.appendChild(a);a.click();a.remove();
+ setTimeout(function(){URL.revokeObjectURL(url)},60000);
+}
 async function share(){
  if(!current)return;
  var text="Servicio VTC JF\\nFactura simplificada "+current.number+"\\nFecha: "+current.date+"\\n"+current.concept+"\\nBase: "+money(current.base)+"\\nIVA 10%: "+money(current.vat)+"\\nTOTAL: "+money(current.total);
