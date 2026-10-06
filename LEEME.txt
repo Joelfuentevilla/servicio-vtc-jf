@@ -1,5 +1,3 @@
-SERVICIO VTC JF V9 — OFFLINE + PDF iPhone
-
-Esta versión corrige la generación de PDF en iPhone: ya no abre una pestaña/ventana aparte. El documento se prepara dentro de la propia aplicación y, al cerrar la impresión/guardar el PDF, vuelves a la pantalla de la factura.
-
-También se mantiene el funcionamiento offline mediante el Service Worker. Tras abrir la aplicación con conexión al menos una vez, sus archivos quedan almacenados para poder utilizarla sin Internet.
+Servicio VTC JF V15
+Corrección del PDF de ticket para iPhone: texto ASCII seguro para evitar caracteres corruptos, saltos de línea correctos y separadores adaptados al ancho del ticket.
+Mantiene factura simplificada en 58/80 mm y factura completa en A4.
