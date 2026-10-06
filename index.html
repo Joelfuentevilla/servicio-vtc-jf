@@ -176,11 +176,16 @@ function printPDF(){
  var pa=$("printArea");
  pa.innerHTML=html;
  pa.dataset.mode=full?"full":"ticket";
+ var printStyle=document.getElementById("dynamicPrintStyle");
+ if(!printStyle){printStyle=document.createElement("style");printStyle.id="dynamicPrintStyle";document.head.appendChild(printStyle)}
+ var width=Number(cfg.paperWidth)||58;
+ printStyle.textContent=full
+   ? "@media print{ @page{size:A4;margin:10mm} }"
+   : "@media print{ @page{size:"+width+"mm auto;margin:0} body.printing #printArea[data-mode=\"ticket\"]{width:"+width+"mm!important} }";
  document.body.classList.add("printing");
- setTimeout(function(){
-   window.print();
-   setTimeout(function(){document.body.classList.remove("printing");pa.innerHTML="";pa.removeAttribute("data-mode")},1500);
- },100);
+ var cleanup=function(){document.body.classList.remove("printing");pa.innerHTML="";pa.removeAttribute("data-mode");};
+ window.addEventListener("afterprint",cleanup,{once:true});
+ setTimeout(function(){window.print();},100);
 }
 
 async function share(){
@@ -204,7 +209,7 @@ $("importBtn").onclick=function(){$("file").click()};
 $("file").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.cfg)cfg=d.cfg;if(Array.isArray(d.invoices))invoices=d.invoices;localStorage.setItem("vtcjf_config_v3",JSON.stringify(cfg));persist();configLoad();renderHistory();reset();alert("Datos importados correctamente.")}catch(err){alert("El archivo no es válido.")}};r.readAsText(f)};
 
 configLoad();reset();
-if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=9").catch(function(){})});}
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=10").catch(function(){})});}
 })();
 </script>
 </body>

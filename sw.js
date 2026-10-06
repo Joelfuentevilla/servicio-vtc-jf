@@ -1,5 +1,5 @@
-const CACHE="vtcjf-v9";
-const ASSETS=["./","./index.html?v=9","./manifest.json","./icon-180.png"];
+const CACHE="vtcjf-v10";
+const ASSETS=["./","./index.html?v=10","./manifest.json","./icon-180.png"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",event=>event.waitUntil(self.clients.claim()));
 self.addEventListener("fetch",event=>{
@@ -10,6 +10,6 @@ self.addEventListener("fetch",event=>{
       const copy=response.clone();
       caches.open(CACHE).then(cache=>cache.put(event.request,copy));
       return response;
-    }).catch(()=>caches.match("./index.html?v=9"));
+    }).catch(()=>caches.match("./index.html?v=10"));
   }));
 });
