@@ -21,6 +21,18 @@ label{display:block;font-size:13px;font-weight:650;color:#667085;margin-bottom:6
 button{border:0;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:700;cursor:pointer}.primary{background:#2563eb;color:#fff;width:100%;padding:14px}.secondary{background:#eef4ff;color:#2563eb}.dark{background:#111827;color:#fff}.danger{background:#fff0f0;color:#b91c1c}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.hidden{display:none}.small{font-size:12px;color:#667085}
 .invoice{padding:13px 0;border-top:1px solid #e5e7eb}.invoice:first-child{border-top:0}.top{display:flex;justify-content:space-between}.badge{background:#e9f8ef;color:#16844b;border-radius:20px;padding:4px 8px;font-size:12px}
 .previewPage{background:#fff;border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:0 2px 10px #0000000a}.pdfhead{display:flex;justify-content:space-between;gap:18px;border-bottom:3px solid #111827;padding-bottom:15px}.brand{font-size:23px;font-weight:800}.muted{font-size:13px;color:#667085;line-height:1.5}.invoiceTitle{text-align:right;font-weight:800}.invoiceTable{width:100%;border-collapse:collapse;margin-top:25px}.invoiceTable th,.invoiceTable td{padding:11px 5px;border-bottom:1px solid #ddd;text-align:left}.invoiceTable th:last-child,.invoiceTable td:last-child{text-align:right}.summary{margin:20px 0 0 auto;max-width:300px}.summary div{padding:5px 0}.grand{border-top:2px solid #111827;margin-top:7px;padding-top:9px;font-size:23px;font-weight:800}.notice{background:#fff8e6;border:1px solid #f3d38a;border-radius:12px;padding:11px;font-size:13px;color:#745a12}
+
+#printArea{display:none}
+@media print{
+ body.printing>*:not(#printArea){display:none!important}
+ body.printing #printArea{display:block!important;background:#fff;color:#000}
+ body.printing #printArea[data-mode="ticket"]{width:100%;font-family:Arial,sans-serif;font-size:12px;color:#000}
+ .printing .ticket{width:100%;margin:0;padding:4mm 3mm;box-sizing:border-box;overflow-wrap:anywhere}
+ .printing .center{text-align:center}.printing .brand{font-size:13px;font-weight:700;margin-bottom:3px}.printing .title{font-size:12px;font-weight:700}.printing .line{border-top:1px dashed #000;margin:8px 0}.printing .block{margin:7px 0}.printing .service{margin:7px 0;line-height:1.3}.printing .amountRow,.printing .totalRow{display:flex;justify-content:space-between;gap:8px;margin:4px 0}.printing .totalRow{font-size:18px;font-weight:800}.printing .small{font-size:10px;line-height:1.4}.printing .thank{margin-top:10px}
+ body.printing #printArea[data-mode="full"]{padding:0;margin:0;font-family:Arial,sans-serif;color:#17202a}
+ .printing .fullInvoice{max-width:760px;margin:auto}.printing .fullHead{display:flex;justify-content:space-between;border-bottom:3px solid #111827;padding-bottom:15px}.printing .fullBrand{font-size:24px;font-weight:800}.printing .muted{font-size:13px;color:#667085;line-height:1.5}.printing .right{text-align:right;line-height:1.5}.printing .clientBox{margin:24px 0;padding:13px;background:#f5f5f5;border-radius:5px}.printing .fullInvoice table{width:100%;border-collapse:collapse}.printing .fullInvoice th,.printing .fullInvoice td{padding:11px 6px;border-bottom:1px solid #ddd;text-align:left}.printing .fullInvoice th:last-child,.printing .fullInvoice td:last-child{text-align:right}.printing .fullSum{max-width:310px;margin:22px 0 0 auto}.printing .fullSum div{padding:6px}.printing .fullSum span{float:right}.printing .grand{border-top:2px solid #111827;margin-top:5px;padding-top:10px;font-size:22px;font-weight:800}
+ @page{size:auto;margin:10mm}
+}
 </style>
 </head>
 <body>
@@ -60,6 +72,7 @@ button{border:0;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:
 <div id="invoicePreview" class="previewPage"></div>
 <button id="share" class="primary">Compartir factura</button>
 </section>
+<div id="printArea"></div>
 </div>
 </main>
 
@@ -138,12 +151,10 @@ function renderHistory(){
 function printPDF(){
  if(!current)return;
  var full=current.type==="completa";
- var width=Number(cfg.paperWidth)||58;
- var w=window.open("","_blank");
- if(!w){alert("El navegador ha bloqueado la ventana. Permite ventanas emergentes para generar el documento.");return}
  var company=esc(cfg.issuer||"Servicio VTC JF");
+ var html="";
  if(!full){
-   var ticket='<div class="ticket">'+
+   html='<div class="ticket">'+
    '<div class="center brand">'+company+'</div>'+
    '<div class="center title">FACTURA SIMPLIFICADA</div>'+
    '<div class="line"></div><div><b>Nº:</b> '+esc(current.number)+'</div><div><b>Fecha:</b> '+esc(current.date)+'</div>'+
@@ -155,17 +166,23 @@ function printPDF(){
    '<div class="line"></div><div class="center small">IVA incluido · Tipo de IVA 10%</div>'+
    (cfg.nif?'<div class="center small">NIF: '+esc(cfg.nif)+'</div>':'')+
    '<div class="center small thank">Gracias por su confianza</div></div>';
-   w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+company+' - '+esc(current.number)+'</title><style>@page{size:'+width+'mm auto;margin:0}html,body{margin:0;padding:0;background:#fff}body{font-family:Arial,sans-serif;font-size:12px;color:#000;width:'+width+'mm}.ticket{width:'+(width-6)+'mm;margin:0 auto;padding:4mm 3mm;box-sizing:border-box;overflow-wrap:anywhere}.center{text-align:center}.brand{font-size:13px;font-weight:700;margin-bottom:3px}.title{font-size:12px;font-weight:700}.line{border-top:1px dashed #000;margin:8px 0}.block{margin:7px 0}.service{margin:7px 0;line-height:1.3}.amountRow,.totalRow{display:flex;justify-content:space-between;gap:8px;margin:4px 0}.totalRow{font-size:18px;font-weight:800}.small{font-size:10px;line-height:1.4}.thank{margin-top:10px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>'+ticket+'</body></html>');
  }else{
-   var fullHtml='<div class="fullInvoice"><div class="fullHead"><div><div class="fullBrand">'+company+'</div><div class="muted">'+esc(cfg.nif)+'<br>'+esc(cfg.address)+'<br>'+esc(cfg.phone)+' '+esc(cfg.email)+'</div></div><div class="right"><b>FACTURA</b><br>Nº '+esc(current.number)+'<br>'+esc(current.date)+'</div></div>'+
+   html='<div class="fullInvoice"><div class="fullHead"><div><div class="fullBrand">'+company+'</div><div class="muted">'+esc(cfg.nif)+'<br>'+esc(cfg.address)+'<br>'+esc(cfg.phone)+' '+esc(cfg.email)+'</div></div><div class="right"><b>FACTURA</b><br>Nº '+esc(current.number)+'<br>'+esc(current.date)+'</div></div>'+
    '<div class="clientBox"><b>DATOS DEL CLIENTE</b><br>'+esc(current.client)+'<br>'+esc(current.clientNif)+(current.clientAddress?'<br>'+esc(current.clientAddress):'')+'</div>'+
    '<table><tr><th>Descripción</th><th>Base imponible</th></tr><tr><td>'+esc(current.concept)+'</td><td>'+money(current.base)+'</td></tr></table>'+
    '<div class="fullSum"><div>Base imponible <span>'+money(current.base)+'</span></div><div>IVA 10 % <span>'+money(current.vat)+'</span></div><div class="grand">TOTAL <span>'+money(current.total)+'</span></div></div>'+
    '<p class="muted">Tipo de IVA aplicado: 10 %.</p></div>';
-   w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+company+' - Factura '+esc(current.number)+'</title><style>@page{size:A4;margin:16mm}body{font-family:Arial,sans-serif;color:#17202a;margin:0}.fullInvoice{max-width:760px;margin:auto}.fullHead{display:flex;justify-content:space-between;border-bottom:3px solid #111827;padding-bottom:15px}.fullBrand{font-size:24px;font-weight:800}.muted{font-size:13px;color:#667085;line-height:1.5}.right{text-align:right;line-height:1.5}.clientBox{margin:24px 0;padding:13px;background:#f5f5f5;border-radius:5px}.fullInvoice table{width:100%;border-collapse:collapse}.fullInvoice th,.fullInvoice td{padding:11px 6px;border-bottom:1px solid #ddd;text-align:left}.fullInvoice th:last-child,.fullInvoice td:last-child{text-align:right}.fullSum{max-width:310px;margin:22px 0 0 auto}.fullSum div{padding:6px}.fullSum span{float:right}.grand{border-top:2px solid #111827;margin-top:5px;padding-top:10px;font-size:22px;font-weight:800}</style></head><body>'+fullHtml+'</body></html>');
  }
- w.document.close();setTimeout(function(){w.focus();w.print()},300);
+ var pa=$("printArea");
+ pa.innerHTML=html;
+ pa.dataset.mode=full?"full":"ticket";
+ document.body.classList.add("printing");
+ setTimeout(function(){
+   window.print();
+   setTimeout(function(){document.body.classList.remove("printing");pa.innerHTML="";pa.removeAttribute("data-mode")},1500);
+ },100);
 }
+
 async function share(){
  if(!current)return;
  var text="Servicio VTC JF\\nFactura simplificada "+current.number+"\\nFecha: "+current.date+"\\n"+current.concept+"\\nBase: "+money(current.base)+"\\nIVA 10%: "+money(current.vat)+"\\nTOTAL: "+money(current.total);
@@ -187,7 +204,7 @@ $("importBtn").onclick=function(){$("file").click()};
 $("file").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.cfg)cfg=d.cfg;if(Array.isArray(d.invoices))invoices=d.invoices;localStorage.setItem("vtcjf_config_v3",JSON.stringify(cfg));persist();configLoad();renderHistory();reset();alert("Datos importados correctamente.")}catch(err){alert("El archivo no es válido.")}};r.readAsText(f)};
 
 configLoad();reset();
-if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})});}
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=9").catch(function(){})});}
 })();
 </script>
 </body>
