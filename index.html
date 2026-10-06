@@ -211,9 +211,12 @@ async function printPDF(){
  if(!full){
    lines=[company,'FACTURA SIMPLIFICADA','--------------------','N. '+current.number,'Fecha: '+current.date];
    if(current.client){lines.push('Cliente: '+current.client);if(current.clientNif)lines.push('NIF: '+current.clientNif);}
-   lines.push('--------------------','Servicio: '+current.concept,'Base imponible: '+money(current.base),'IVA 10%: '+money(current.vat),'--------------------','TOTAL: '+money(current.total),'','IVA incluido - Tipo IVA 10%');
+   var basePdf=Number(current.base||0).toFixed(2).replace('.',',');
+   var vatPdf=Number(current.vat||0).toFixed(2).replace('.',',');
+   var totalPdf=Number(current.total||0).toFixed(2).replace('.',',');
+   lines.push('--------------------','Servicio: '+current.concept,'Base imponible: '+basePdf+' EUR','IVA 10%: '+vatPdf+' EUR','--------------------','TOTAL: '+totalPdf+' EUR','','IVA incluido - Tipo IVA 10%');
    if(cfg.nif)lines.push('NIF: '+cfg.nif);
-   if(cfg.address)lines.push('Dirección: '+cfg.address);
+   if(cfg.address)lines.push('Direccion: '+cfg.address);
    if(cfg.phone)lines.push('Tel: '+cfg.phone);
    lines.push('Gracias por su confianza');
  }else{
@@ -221,7 +224,8 @@ async function printPDF(){
  }
  var pageW=full?595:(width===80?227:165);
  var initialH=full?842:220;
- var blob=buildSimplePDF(lines,pageW,initialH,full?10:9.5);
+ var ticketFont=(width===80?9.5:8.5);
+ var blob=buildSimplePDF(lines,pageW,initialH,full?10:ticketFont);
  var filename='Factura_'+current.number.replace(/[^a-z0-9_-]/gi,'_')+'.pdf';
  var file=new File([blob],filename,{type:'application/pdf'});
  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
