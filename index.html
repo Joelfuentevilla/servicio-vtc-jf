@@ -209,15 +209,15 @@ async function printPDF(){
  var lines=[];
  var company=cfg.issuer||'Servicio VTC JF';
  if(!full){
-   lines=[company,'FACTURA SIMPLIFICADA','-------------------------','N. '+current.number,'Fecha: '+current.date];
+   lines=[company,'FACTURA SIMPLIFICADA','--------------------','N. '+current.number,'Fecha: '+current.date];
    if(current.client){lines.push('Cliente: '+current.client);if(current.clientNif)lines.push('NIF: '+current.clientNif);}
-   lines.push('-------------------------','Servicio: '+current.concept,'Base imponible: '+money(current.base),'IVA 10%: '+money(current.vat),'-------------------------','TOTAL: '+money(current.total),'','IVA incluido - Tipo IVA 10%');
+   lines.push('--------------------','Servicio: '+current.concept,'Base imponible: '+money(current.base),'IVA 10%: '+money(current.vat),'--------------------','TOTAL: '+money(current.total),'','IVA incluido - Tipo IVA 10%');
    if(cfg.nif)lines.push('NIF: '+cfg.nif);
    if(cfg.address)lines.push('Dirección: '+cfg.address);
    if(cfg.phone)lines.push('Tel: '+cfg.phone);
    lines.push('Gracias por su confianza');
  }else{
-   lines=[company,'FACTURA','N. '+current.number,'Fecha: '+current.date,'','DATOS DEL CLIENTE',current.client,'NIF: '+(current.clientNif||''),current.clientAddress||'','-------------------------','Descripcion: '+current.concept,'Base imponible: '+money(current.base),'IVA 10%: '+money(current.vat),'TOTAL: '+money(current.total),'','Tipo de IVA aplicado: 10 %.'];
+   lines=[company,'FACTURA','N. '+current.number,'Fecha: '+current.date,'','DATOS DEL CLIENTE',current.client,'NIF: '+(current.clientNif||''),current.clientAddress||'','--------------------','Descripcion: '+current.concept,'Base imponible: '+money(current.base),'IVA 10%: '+money(current.vat),'TOTAL: '+money(current.total),'','Tipo de IVA aplicado: 10 %.'];
  }
  var pageW=full?595:(width===80?227:165);
  var initialH=full?842:220;
@@ -253,7 +253,7 @@ $("importBtn").onclick=function(){$("file").click()};
 $("file").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.cfg)cfg=d.cfg;if(Array.isArray(d.invoices))invoices=d.invoices;localStorage.setItem("vtcjf_config_v3",JSON.stringify(cfg));persist();configLoad();renderHistory();reset();alert("Datos importados correctamente.")}catch(err){alert("El archivo no es válido.")}};r.readAsText(f)};
 
 configLoad();reset();
-if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=10").catch(function(){})});}
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=16").catch(function(){})});}
 })();
 </script>
 </body>
