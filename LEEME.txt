@@ -1,2 +1,1 @@
-Servicio VTC JF V22
-Factura simplificada: PDF en formato ticket 58/80 mm con la misma jerarquia visual de la vista de la app. Factura completa: PDF A4.
+V23: factura simplificada en PDF vuelve a ser un ticket 58/80 mm con el formato visual de la app. Factura completa permanece A4.
