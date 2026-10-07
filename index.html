@@ -54,7 +54,7 @@ button{border:0;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:
 </select></div>
 <div class="card"><h2>Cliente <span id="clientOptional" class="small">(opcional)</span></h2><div id="completeNotice" class="small" style="display:none;margin-bottom:10px">Para una factura completa, introduce los datos del cliente.</div><label>Nombre / empresa</label><input id="client"><div class="space"></div><label>NIF / CIF</label><input id="clientNif"><div class="space"></div><label>Dirección</label><textarea id="clientAddress"></textarea></div>
 <div class="card"><h2>Servicio</h2><label>Descripción</label><input id="concept" value="Servicio de transporte VTC"><div class="space"></div><label>Precio final con IVA incluido (€)</label><input id="price" type="number" step="0.01" inputmode="decimal" placeholder="0,00"></div>
-<div class="card"><h2>Resumen</h2><div class="row"><span>Base imponible</span><strong id="base">0,00 €</strong></div><div class="row"><span>IVA incluido (10 %)</span><strong id="vat">0,00 €</strong></div><div class="row"><span>Total</span><strong id="total" class="total">0,00 €</strong></div><button id="preview" class="primary" style="margin-top:10px">Ver factura</button><button id="save" class="secondary" style="width:100%;margin-top:9px">Guardar factura</button></div>
+<div class="card"><h2>Resumen</h2><div class="row"><span>Base imponible</span><strong id="base">0,00 €</strong></div><div class="row"><span>IVA incluido (10 %)</span><strong id="vat">0,00 €</strong></div><div class="row"><span>Total</span><strong id="total" class="total">0,00 €</strong></div><button id="preview" class="primary" style="margin-top:10px">Ver factura</button><button id="save" class="secondary" style="width:100%;margin-top:9px">Guardar factura</button><button id="cancelEdit" class="secondary hidden" style="width:100%;margin-top:9px">Cancelar edición</button></div>
 </section>
 
 <section id="history" class="hidden"><div class="card"><h2>Historial</h2><input id="search" placeholder="Buscar por factura, cliente o servicio"><div id="list" style="margin-top:8px"></div></div></section>
@@ -85,6 +85,7 @@ const today=()=>new Date().toISOString().slice(0,10);
 let invoices=JSON.parse(localStorage.getItem("vtcjf_invoices_v3")||"[]");
 let cfg=JSON.parse(localStorage.getItem("vtcjf_config_v3")||"{}");
 let current=null;
+let editingId=null;
 
 function updateInvoiceTypeUI(){
  var full=$("invoiceType").value==="completa";
@@ -101,10 +102,12 @@ function setTab(name){
   if(name==="history")renderHistory();
 }
 function reset(){
+ editingId=null;
  $("number").value=nextNumber();$("date").value=today();
  $("invoiceType").value="simplificada";updateInvoiceTypeUI();
  $("client").value="";$("clientNif").value="";$("clientAddress").value="";
  $("concept").value="Servicio de transporte VTC";$("price").value="";calc();
+ $("save").textContent="Guardar factura";$("cancelEdit").classList.add("hidden");
 }
 function configLoad(){
  $("issuer").value=cfg.issuer||"Servicio VTC JF";$("nif").value=cfg.nif||"";
@@ -116,7 +119,8 @@ function makeInvoiceFromForm(){
  if(t<=0){alert("Introduce el precio final.");return null}
  var type=$("invoiceType").value;
  if(type==="completa" && !$("client").value.trim()){alert("Para una factura completa debes introducir el nombre o razón social del cliente.");return null}
- return {id:Date.now().toString(),number:$("number").value,date:$("date").value,type:type,
+ var old=editingId?invoices.find(function(i){return i.id===editingId}):null;
+ return {id:editingId||Date.now().toString(),number:old?old.number:$("number").value,date:$("date").value,type:type,
  client:$("client").value,clientNif:$("clientNif").value,clientAddress:$("clientAddress").value,
  concept:$("concept").value||"Servicio de transporte VTC",total:+t.toFixed(2),
  base:+(t/1.10).toFixed(2),vat:+(t-t/1.10).toFixed(2)};
@@ -137,15 +141,39 @@ function invoiceMarkup(x){
 function openPreview(x){current=x;$("invoicePreview").innerHTML=invoiceMarkup(x);setTab("previewPage");window.scrollTo(0,0)}
 function saveInvoice(){
  var x=makeInvoiceFromForm();if(!x)return;
- invoices.push(x);persist();alert("Factura guardada correctamente.");reset();
+ if(editingId){
+   var idx=invoices.findIndex(function(i){return i.id===editingId});
+   if(idx>=0) invoices[idx]=x;
+   persist();alert("Factura actualizada correctamente.");
+ }else{
+   invoices.push(x);persist();alert("Factura guardada correctamente.");
+ }
+ reset();setTab("history");
+}
+function editInvoice(x){
+ editingId=x.id;
+ $("number").value=x.number;
+ $("date").value=x.date;
+ $("invoiceType").value=x.type||"simplificada";
+ $("client").value=x.client||"";
+ $("clientNif").value=x.clientNif||"";
+ $("clientAddress").value=x.clientAddress||"";
+ $("concept").value=x.concept||"Servicio de transporte VTC";
+ $("price").value=Number(x.total).toFixed(2);
+ updateInvoiceTypeUI();calc();
+ $("save").textContent="Guardar cambios";
+ $("cancelEdit").classList.remove("hidden");
+ setTab("new");
+ window.scrollTo(0,0);
 }
 function renderHistory(){
  var q=($("search").value||"").toLowerCase();
  var arr=invoices.filter(function(x){return (x.number+" "+x.client+" "+x.concept).toLowerCase().includes(q)});
  $("list").innerHTML=arr.length?arr.slice().reverse().map(function(x){
- return '<div class="invoice"><div class="top"><b>'+esc(x.number)+'</b><span class="badge">'+money(x.total)+'</span></div><div>'+esc(x.client||"Consumidor final")+' · '+esc(x.concept)+'</div><div class="small">'+esc(x.date)+' · Base '+money(x.base)+' · IVA '+money(x.vat)+'</div><div class="actions" style="margin-top:8px"><button class="secondary view" data-id="'+esc(x.id)+'">Ver factura</button><button class="danger delete" data-id="'+esc(x.id)+'">Eliminar</button></div></div>';
+ return '<div class="invoice"><div class="top"><b>'+esc(x.number)+'</b><span class="badge">'+money(x.total)+'</span></div><div>'+esc(x.client||"Consumidor final")+' · '+esc(x.concept)+'</div><div class="small">'+esc(x.date)+' · Base '+money(x.base)+' · IVA '+money(x.vat)+'</div><div class="actions" style="margin-top:8px"><button class="secondary view" data-id="'+esc(x.id)+'">Ver factura</button><button class="secondary edit" data-id="'+esc(x.id)+'">✏️ Editar</button><button class="danger delete" data-id="'+esc(x.id)+'">Eliminar</button></div></div>';
  }).join(""):'<div class="empty">No hay facturas.</div>';
  document.querySelectorAll(".view").forEach(function(b){b.onclick=function(){var x=invoices.find(function(i){return i.id===b.dataset.id});if(x)openPreview(x)}});
+ document.querySelectorAll(".edit").forEach(function(b){b.onclick=function(){var x=invoices.find(function(i){return i.id===b.dataset.id});if(x)editInvoice(x)}});
  document.querySelectorAll(".delete").forEach(function(b){b.onclick=function(){if(confirm("¿Eliminar esta factura?")){invoices=invoices.filter(function(i){return i.id!==b.dataset.id});persist();renderHistory()}}});
 }
 function pdfEscape(t){return String(t).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/\r?\n/g,' ')}
@@ -541,7 +569,7 @@ $("importBtn").onclick=function(){$("file").click()};
 $("file").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.cfg)cfg=d.cfg;if(Array.isArray(d.invoices))invoices=d.invoices;localStorage.setItem("vtcjf_config_v3",JSON.stringify(cfg));persist();configLoad();renderHistory();reset();alert("Datos importados correctamente.")}catch(err){alert("El archivo no es válido.")}};r.readAsText(f)};
 
 configLoad();reset();
-if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=24").catch(function(){})});}
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=25").catch(function(){})});}
 })();
 </script>
 </body>
