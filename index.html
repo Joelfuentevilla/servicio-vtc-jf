@@ -304,6 +304,187 @@ function buildFullInvoicePDF(x, cfg){
 
 
 function buildSimplifiedInvoicePDF(x, cfg){
+  // Ticket con la misma jerarquia visual de la vista de la app, adaptada a 58/80 mm.
+  var pageW=(Number(cfg.paperWidth)||58)*72/25.4;
+  var margin=pageW<190?12:16;
+  var right=pageW-margin;
+  var content='';
+  function text(txt,x,y,size,bold){
+    txt=pdfSafeText(txt);
+    content+='BT\n/'+(bold?'F2':'F1')+' '+size+' Tf\n1 0 0 1 '+x.toFixed(2)+' '+y.toFixed(2)+' Tm ('+pdfEscape(txt)+') Tj\nET\n';
+  }
+  function line(x1,y1,x2,y2,w,dashed){
+    if(dashed) content+='[2 2] 0 d\n';
+    content+=(w||0.8)+' w\n'+x1.toFixed(2)+' '+y1.toFixed(2)+' m '+x2.toFixed(2)+' '+y2.toFixed(2)+' l S\n';
+    if(dashed) content+='[] 0 d\n';
+  }
+  function wrap(txt,maxChars){return wrapPdfText(txt,maxChars);}
+  function centered(txt,y,size,bold){
+    txt=pdfSafeText(txt); var w=txt.length*size*0.52; text(txt,Math.max(margin,(pageW-w)/2),y,size,bold); return y-size-3;
+  }
+  function rightText(txt,x,y,size,bold){
+    txt=pdfSafeText(txt); var w=txt.length*size*0.52; text(txt,x-w,y,size,bold);
+  }
+  var issuer=cfg.issuer||'Servicio VTC JF';
+  var y=0;
+  var companyLines=wrap(issuer, pageW<190?25:34);
+  var titleSize=pageW<190?9.2:10.2;
+  var bodySize=pageW<190?7.2:8.2;
+  var small=pageW<190?6.1:7;
+  var lineH=bodySize+2.5;
+
+  // Calcular altura primero para que el PDF sea un ticket real, sin espacio A4 sobrante.
+  var conceptLines=wrap(x.concept||'Servicio de transporte VTC', pageW<190?28:38);
+  var clientLines=wrap(x.client||'Consumidor final', pageW<190?30:42);
+  var addressLines=x.clientAddress?wrap(x.clientAddress,pageW<190?30:42):[];
+  var height=18 + companyLines.length*11 + 4 + 13 + 7 + 18 + 16 + 7;
+  height += 12 + clientLines.length*10 + (x.clientNif?10:0) + addressLines.length*9 + 7;
+  height += 14 + conceptLines.length*lineH + 12 + 4*11 + 18 + 18 + 10 + 12;
+  var pageH=Math.max(190,height+10);
+  y=pageH-16;
+
+  // Cabecera como en la app: nombre destacado y titulo.
+  companyLines.forEach(function(t){y=centered(t,y, pageW<190?9.4:10.4,true);});
+  y-=1;
+  y=centered('FACTURA SIMPLIFICADA',y,titleSize,true);
+  y-=2;
+  line(margin,y,right,y,0.8,true); y-=13;
+
+  text('N. '+x.number,margin,y,bodySize,true); y-=lineH;
+  text('Fecha: '+x.date,margin,y,bodySize,false); y-=7;
+  line(margin,y,right,y,0.8,true); y-=13;
+
+  text('Cliente',margin,y,bodySize+0.4,true); y-=lineH;
+  clientLines.forEach(function(t){text(t,margin,y,bodySize,false);y-=lineH;});
+  if(x.clientNif){text('NIF: '+x.clientNif,margin,y,small,false);y-=10;}
+  addressLines.forEach(function(t){text(t,margin,y,small,false);y-=9;});
+  y-=3;
+
+  text('Descripción',margin,y,bodySize+0.3,true);
+  rightText('Importe',right,y,bodySize+0.3,true); y-=6;
+  line(margin,y,right,y,0.6); y-=12;
+  conceptLines.forEach(function(t){text(t,margin,y,bodySize,false);y-=lineH;});
+  rightText(money(x.base).replace('€','EUR'),right,y+lineH,bodySize,false);
+  y-=2;
+  line(margin,y,right,y,0.6); y-=13;
+
+  text('Base imponible',margin,y,bodySize,false);
+  rightText(money(x.base).replace('€','EUR'),right,y,bodySize,false); y-=11;
+  text('IVA 10 %',margin,y,bodySize,false);
+  rightText(money(x.vat).replace('€','EUR'),right,y,bodySize,false); y-=13;
+  line(margin,y,right,y,1.2); y-=15;
+  text('TOTAL',margin,y, pageW<190?11.5:12.5,true);
+  rightText(money(x.total).replace('€','EUR'),right,y,pageW<190?11.5:12.5,true); y-=20;
+
+  centered('IVA incluido - Tipo IVA 10%',y,small,false); y-=4;
+  if(cfg.nif){centered('NIF: '+cfg.nif,y,small,false);y-=10;}
+  centered('Gracias por su confianza',y,small,false);
+
+  var objs=[];
+  objs.push('<< /Type /Catalog /Pages 2 0 R >>');
+  objs.push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  objs.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pageW.toFixed(2)+' '+pageH.toFixed(2)+'] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>');
+  objs.push('<< /Length '+content.length+' >>\nstream\n'+content+'endstream');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  var pdfdoc='%PDF-1.4\n', offsets=[0];
+  objs.forEach(function(o,i){offsets[i+1]=pdfdoc.length;pdfdoc+=(i+1)+' 0 obj\n'+o+'\nendobj\n';});
+  var xref=pdfdoc.length; pdfdoc+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
+  for(var j=1;j<offsets.length;j++) pdfdoc+=String(offsets[j]).padStart(10,'0')+' 00000 n \n';
+  pdfdoc+='trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+  return new Blob([pdfdoc],{type:'application/pdf'});
+}
+
+function buildFullInvoicePDF(x, cfg){
+  var pageW=595, pageH=842, margin=52, right=543;
+  var content='';
+  function pdfSafe(t){return pdfSafeText(t);}
+  function text(txt,x,y,size,bold){
+    txt=pdf(txt); content+='BT\n/F'+(bold?2:1)+' '+size+' Tf\n'+x.toFixed(2)+' '+y.toFixed(2)+' Td\n('+txt+') Tj\nET\n';
+  }
+  function line(x1,y1,x2,y2,w){content+=(w||1)+' w\n'+x1.toFixed(2)+' '+y1.toFixed(2)+' m '+x2.toFixed(2)+' '+y2.toFixed(2)+' l S\n';}
+  function pdf(t){return pdfEscape(pdfSafe(t));}
+  function rightText(txt,x,y,size,bold){
+    txt=pdfSafe(txt); var w=txt.length*size*0.50; text(txt,x-w,y,size,bold);
+  }
+  function wrap(txt,max){return wrapPdfText(pdfSafe(txt),max);}
+
+  var issuer=cfg.issuer||'Servicio VTC JF';
+  var nif=cfg.nif||'';
+  var address=cfg.address||'';
+  var phone=cfg.phone||'';
+  var email=cfg.email||'';
+  var full=x.type==='completa';
+  var title=full?'FACTURA':'FACTURA SIMPLIFICADA';
+
+  // Encabezado: mismo esquema visual que la vista previa de la app.
+  text(issuer,margin,785,18,true);
+  var cy=764;
+  if(nif){text(nif,margin,cy,9,false);cy-=15;}
+  if(address){
+    wrap(address,62).slice(0,2).forEach(function(t){text(t,margin,cy,9,false);cy-=13;});
+  }
+  if(phone||email){text([phone,email].filter(Boolean).join('  |  '),margin,cy,9,false);}
+
+  text(title,405,785,18,true);
+  text('N. '+x.number,405,760,10,false);
+  text(x.date,405,744,10,false);
+
+  line(margin,700,right,700,2.2);
+
+  // Cliente
+  text(full?'Cliente':'Cliente',margin,665,12,true);
+  text(pdfSafe(x.client||'Consumidor final'),margin,644,12,false);
+  var clientY=624;
+  if(x.clientNif){text('NIF: '+x.clientNif,margin,clientY,9,false);clientY-=14;}
+  if(x.clientAddress){
+    wrap(x.clientAddress,60).slice(0,2).forEach(function(t){text(t,margin,clientY,9,false);clientY-=13;});
+  }
+
+  // Tabla de concepto.
+  var tableTop=clientY-18;
+  text('Descripción',margin,tableTop,12,true);
+  rightText('Importe',right,tableTop,12,true);
+  line(margin,tableTop-12,right,tableTop-12,0.7);
+
+  var concept=pdfSafe(x.concept||'Servicio de transporte VTC');
+  var wrapped=wrap(concept,58);
+  var rowY=tableTop-35;
+  wrapped.slice(0,3).forEach(function(t){text(t,margin,rowY,11,false);rowY-=16;});
+  rightText(money(x.base).replace('€','EUR'),right,rowY+16,11,false);
+  line(margin,rowY-2,right,rowY-2,0.7);
+
+  // Resumen, alineado como en la vista previa.
+  var sy=rowY-34;
+  text('Base imponible',390,sy,11,false);
+  rightText(money(x.base).replace('€','EUR'),right,sy,11,false);
+  sy-=22;
+  text('IVA 10 %',390,sy,11,false);
+  rightText(money(x.vat).replace('€','EUR'),right,sy,11,false);
+  sy-=28;
+  line(360,sy+10,right,sy+10,1.8);
+  text('TOTAL',360,sy-10,16,true);
+  rightText(money(x.total).replace('€','EUR'),right,sy-10,16,true);
+
+  text('Base imponible e IVA desglosados. Tipo de IVA aplicado: 10 %.',margin,100,9,false);
+
+  var objs=[];
+  objs.push('<< /Type /Catalog /Pages 2 0 R >>');
+  objs.push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  objs.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pageW+' '+pageH+'] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>');
+  objs.push('<< /Length '+content.length+' >>\nstream\n'+content+'endstream');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  var pdfdoc='%PDF-1.4\n', offsets=[0];
+  objs.forEach(function(o,i){offsets[i+1]=pdfdoc.length;pdfdoc+=(i+1)+' 0 obj\n'+o+'\nendobj\n';});
+  var xref=pdfdoc.length; pdfdoc+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
+  for(var j=1;j<offsets.length;j++) pdfdoc+=String(offsets[j]).padStart(10,'0')+' 00000 n \n';
+  pdfdoc+='trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+  return new Blob([pdfdoc],{type:'application/pdf'});
+}
+
+
+function buildSimplifiedInvoicePDF(x, cfg){
   var pageW=595, pageH=842, margin=48, right=pageW-margin;
   var content='';
   function text(txt,x,y,size,bold){

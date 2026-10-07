@@ -1,1 +1,2 @@
-Servicio VTC JF V21. La factura completa en PDF replica la estructura visual de la vista previa de la app. La factura simplificada mantiene el sistema de ticket que ya funciona en iPhone.
+Servicio VTC JF V22
+Factura simplificada: PDF en formato ticket 58/80 mm con la misma jerarquia visual de la vista de la app. Factura completa: PDF A4.
