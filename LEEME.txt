@@ -1,12 +1,1 @@
-Servicio VTC JF V19
-
-Diseño del ticket basado en el modelo V8 enviado por la usuaria:
-- Nombre de empresa en negrita y centrado.
-- FACTURA SIMPLIFICADA destacada.
-- Número y fecha.
-- Servicio destacado.
-- Base imponible e IVA en formato compacto.
-- TOTAL destacado en negrita.
-- IVA incluido, NIF y agradecimiento en letra pequeña.
-
-Mantiene el generador de PDF compatible con iPhone de las versiones V16/V17 y funcionamiento offline.
+Servicio VTC JF V21. La factura completa en PDF replica la estructura visual de la vista previa de la app. La factura simplificada mantiene el sistema de ticket que ya funciona en iPhone.
