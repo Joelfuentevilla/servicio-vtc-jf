@@ -1,1 +1,3 @@
-V23: factura simplificada en PDF vuelve a ser un ticket 58/80 mm con el formato visual de la app. Factura completa permanece A4.
+Servicio VTC JF V24
+
+Cambio respecto a V23: se añade más espacio visual entre "IVA incluido - Tipo IVA 10%" y "Gracias por su confianza" en el ticket PDF de factura simplificada. El resto se mantiene igual.

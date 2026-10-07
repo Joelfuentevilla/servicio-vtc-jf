@@ -376,8 +376,8 @@ function buildSimplifiedInvoicePDF(x, cfg){
   text('TOTAL',margin,y, pageW<190?11.5:12.5,true);
   rightText(money(x.total).replace('€','EUR'),right,y,pageW<190?11.5:12.5,true); y-=20;
 
-  centered('IVA incluido - Tipo IVA 10%',y,small,false); y-=4;
-  if(cfg.nif){centered('NIF: '+cfg.nif,y,small,false);y-=10;}
+  centered('IVA incluido - Tipo IVA 10%',y,small,false); y-=9;
+  if(cfg.nif){centered('NIF: '+cfg.nif,y,small,false);y-=14;}
   centered('Gracias por su confianza',y,small,false);
 
   var objs=[];
@@ -505,7 +505,7 @@ async function printPDF(){
    lines.push({text:'TOTAL: '+money(current.total),bold:true,size:11,top:1});
    lines.push({text:'IVA incluido - Tipo IVA 10%',center:true,size:6.1,top:5});
    if(cfg.nif) lines.push({text:'NIF: '+cfg.nif,center:true,size:6.1});
-   lines.push({text:'Gracias por su confianza',center:true,size:6.1,top:3});
+   lines.push({text:'Gracias por su confianza',center:true,size:6.1,top:8});
    blob=buildSimplifiedInvoicePDF(current,cfg);
  }else{
    blob=buildFullInvoicePDF(current,cfg);
@@ -541,7 +541,7 @@ $("importBtn").onclick=function(){$("file").click()};
 $("file").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.cfg)cfg=d.cfg;if(Array.isArray(d.invoices))invoices=d.invoices;localStorage.setItem("vtcjf_config_v3",JSON.stringify(cfg));persist();configLoad();renderHistory();reset();alert("Datos importados correctamente.")}catch(err){alert("El archivo no es válido.")}};r.readAsText(f)};
 
 configLoad();reset();
-if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=20").catch(function(){})});}
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=24").catch(function(){})});}
 })();
 </script>
 </body>
