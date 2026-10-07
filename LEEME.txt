@@ -1,3 +1,1 @@
-Servicio VTC JF V15
-Corrección del PDF de ticket para iPhone: texto ASCII seguro para evitar caracteres corruptos, saltos de línea correctos y separadores adaptados al ancho del ticket.
-Mantiene factura simplificada en 58/80 mm y factura completa en A4.
+Servicio VTC JF V18. Diseño del ticket recuperado de la V8 con generador PDF compatible con iPhone y funcionamiento offline.

@@ -1,7 +1,7 @@
 {
   "name": "Servicio VTC JF",
   "short_name": "VTC JF",
-  "start_url": "./index.html?v=13",
+  "start_url": "./index.html?v=18",
   "display": "standalone",
   "background_color": "#f3f4f6",
   "theme_color": "#111827",
