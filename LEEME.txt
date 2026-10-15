@@ -1,3 +1,7 @@
-Servicio VTC JF V24
+Servicio VTC JF — V26 (caché local primero)
 
-Cambio respecto a V23: se añade más espacio visual entre "IVA incluido - Tipo IVA 10%" y "Gracias por su confianza" en el ticket PDF de factura simplificada. El resto se mantiene igual.
+Basado en V25. Se conserva la aplicación y se actualiza el service worker para abrir primero los archivos guardados localmente. Una vez instalada y abierta al menos una vez con Internet, la navegación de la app usa la copia en caché y no necesita contactar con GitHub para abrir la pantalla principal.
+
+IMPORTANTE: esto no convierte la PWA en una app independiente de su origen web. Para instalarla inicialmente y recibir actualizaciones necesita una dirección HTTPS. No despubliques GitHub Pages hasta probar en el iPhone que abre con modo avión y que puedes crear, editar, consultar y exportar facturas. Haz primero una copia de seguridad desde la propia app.
+
+Los datos de facturas y configuración se guardan en el almacenamiento local del navegador (localStorage). Exporta copias de seguridad regularmente.
