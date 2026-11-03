@@ -351,10 +351,10 @@ function buildSimplifiedInvoicePDF(x, cfg){
     text(txt,Math.max(margin,tx-w),ty,size,bold);
   }
   var compact=pageW<190;
-  var brandSize=compact?10.0:12.2;
-  var titleSize=compact?8.0:9.4;
-  var bodySize=compact?8.0:9.2;
-  var smallSize=compact?6.5:7.2;
+  var brandSize=compact?10.6:12.2;
+  var titleSize=compact?8.5:9.4;
+  var bodySize=compact?8.5:9.2;
+  var smallSize=compact?7.0:7.2;
   var lineH=bodySize+3;
   var maxChars=compact?34:48;
   var companyLines=wrap(cfg.issuer||'Servicio VTC JF',compact?27:42);
@@ -407,8 +407,8 @@ function buildSimplifiedInvoicePDF(x, cfg){
   text('IVA 10 %',margin,y,bodySize,false);
   rightText(money(x.vat),right,y,bodySize,false);y-=14;
   line(margin,y,right,y,1.1);y-=17;
-  text('TOTAL',margin,y,compact?12.2:15,true);
-  rightText(money(x.total),right,y,compact?12.2:15,true);y-=25;
+  text('TOTAL',margin,y,compact?12.8:15,true);
+  rightText(money(x.total),right,y,compact?12.8:15,true);y-=25;
 
   text('Base imponible e IVA desglosados. Tipo de IVA aplicado: 10 %.',margin,y,smallSize,false);y-=smallSize+8;
   text('Gracias por su confianza',margin,y,smallSize,false);
