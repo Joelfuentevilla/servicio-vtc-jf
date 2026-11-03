@@ -524,12 +524,24 @@ async function printPDF(){
  // Así se evita mantener dos diseños independientes que puedan acabar desincronizados.
  var area=$("printArea");
  area.innerHTML=invoiceMarkup(current);
- area.setAttribute('data-mode',current.type==='completa'?'full':'simplificada');
+ var isFull=current.type==='completa';
+ area.setAttribute('data-mode',isFull?'full':'simplificada');
+ // La factura simplificada se prepara para rollo térmico de 80 mm.
+ // La factura completa conserva su impresión A4.
+ var ticketStyle=document.getElementById('ticket80PrintStyle');
+ if(ticketStyle) ticketStyle.remove();
+ if(!isFull){
+   ticketStyle=document.createElement('style');
+   ticketStyle.id='ticket80PrintStyle';
+   ticketStyle.textContent='@media print{@page{size:80mm auto;margin:3mm} body.printing #printArea{box-sizing:border-box!important;width:74mm!important;max-width:74mm!important;margin:0 auto!important;padding:0!important} body.printing #printArea *{box-sizing:border-box} body.printing #printArea .pdfhead{display:block!important;gap:0!important;padding-bottom:8px!important;border-bottom:1px solid #111827!important} body.printing #printArea .brand{font-size:16px!important} body.printing #printArea .muted{font-size:10px!important;line-height:1.35!important} body.printing #printArea .invoiceTitle{text-align:left!important;font-size:13px!important;margin-top:5px!important} body.printing #printArea .invoiceTable{margin-top:10px!important;font-size:10px!important} body.printing #printArea .invoiceTable th,body.printing #printArea .invoiceTable td{padding:5px 2px!important;font-size:10px!important} body.printing #printArea .summary{max-width:none!important;width:100%!important;margin:10px 0 0!important;font-size:11px!important} body.printing #printArea .grand{font-size:17px!important}}';
+   document.head.appendChild(ticketStyle);
+ }
  document.body.classList.add('printing');
  var cleanup=function(){
    document.body.classList.remove('printing');
    area.innerHTML='';
    area.removeAttribute('data-mode');
+   if(ticketStyle) ticketStyle.remove();
    window.removeEventListener('afterprint',cleanup);
  };
  window.addEventListener('afterprint',cleanup);
@@ -561,7 +573,7 @@ $("importBtn").onclick=function(){$("file").click()};
 $("file").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.cfg)cfg=d.cfg;if(Array.isArray(d.invoices))invoices=d.invoices;localStorage.setItem("vtcjf_config_v3",JSON.stringify(cfg));persist();configLoad();renderHistory();reset();alert("Datos importados correctamente.")}catch(err){alert("El archivo no es válido.")}};r.readAsText(f)};
 
 configLoad();reset();
-if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=28").catch(function(){})});}
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=29").catch(function(){})});}
 })();
 </script>
 </body>

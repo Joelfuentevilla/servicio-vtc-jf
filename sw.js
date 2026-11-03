@@ -1,4 +1,4 @@
-const CACHE = 'vtcjf-v28';
+const CACHE = 'vtcjf-v29';
 const APP_FILES = ['./', './index.html', './manifest.json', './icon-180.png'];
 
 self.addEventListener('install', event => {
