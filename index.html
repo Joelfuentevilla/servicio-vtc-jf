@@ -78,9 +78,9 @@ button{border:0;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:
 <div id="invoicePreview" class="previewPage"></div>
 <button id="share" class="primary">Compartir factura</button>
 </section>
-<div id="printArea"></div>
 </div>
 </main>
+<div id="printArea"></div>
 
 <script>
 (function(){
@@ -561,7 +561,7 @@ $("importBtn").onclick=function(){$("file").click()};
 $("file").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.cfg)cfg=d.cfg;if(Array.isArray(d.invoices))invoices=d.invoices;localStorage.setItem("vtcjf_config_v3",JSON.stringify(cfg));persist();configLoad();renderHistory();reset();alert("Datos importados correctamente.")}catch(err){alert("El archivo no es válido.")}};r.readAsText(f)};
 
 configLoad();reset();
-if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=26").catch(function(){})});}
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js?v=28").catch(function(){})});}
 })();
 </script>
 </body>
