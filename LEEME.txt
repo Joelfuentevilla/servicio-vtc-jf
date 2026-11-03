@@ -1,3 +1,1 @@
-V34 - Basada en V26. Se conserva la generación directa del PDF.
-Correcciones: datos del emisor completos con NIF identificado en cabecera, sin NIF duplicado al pie; título sin recortes; resumen y total alineados sin solapamientos. La factura completa A4 conserva su generador original.
-Sube el contenido de esta carpeta a la raíz del repositorio GitHub.
+V35 - Basada en V34/V26. Único ajuste: el título FACTURA SIMPLIFICADA se desplaza ligeramente hacia la izquierda. Se mantiene el resto del diseño y el generador directo de PDF. Sube el contenido de esta carpeta a la raíz del repositorio GitHub.

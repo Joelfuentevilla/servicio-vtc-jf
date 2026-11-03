@@ -381,7 +381,7 @@ function buildSimplifiedInvoicePDF(x, cfg){
   detailLines.forEach(function(t){text(t,margin,y,smallSize,false);y-=smallSize+2;});
   y-=8;
   // El título ocupa su propia línea para que nunca quede cortado por el nombre comercial.
-  rightText('FACTURA SIMPLIFICADA',right,y,titleSize,true);y-=titleSize+4;
+  rightText('FACTURA SIMPLIFICADA',right-8,y,titleSize,true);y-=titleSize+4;
   rightText('Nº '+x.number,right,y,bodySize,true);y-=bodySize+2;
   rightText(x.date,right,y,bodySize,true);y-=10;
   line(margin,y,right,y,1.1);y-=16;
