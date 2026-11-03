@@ -356,9 +356,9 @@ function buildSimplifiedInvoicePDF(x, cfg){
   var issuer=cfg.issuer||'Servicio VTC JF';
   var y=0;
   var companyLines=wrap(issuer, pageW<190?25:34);
-  var titleSize=pageW<190?10.0:10.8;
-  var bodySize=pageW<190?8.0:8.6;
-  var small=pageW<190?6.7:7.2;
+  var titleSize=pageW<190?9.2:10.2;
+  var bodySize=pageW<190?7.2:8.2;
+  var small=pageW<190?6.1:7;
   var lineH=bodySize+2.5;
 
   // Calcular altura primero para que el PDF sea un ticket real, sin espacio A4 sobrante.
@@ -372,7 +372,7 @@ function buildSimplifiedInvoicePDF(x, cfg){
   y=pageH-16;
 
   // Cabecera como en la app: nombre destacado y titulo.
-  companyLines.forEach(function(t){y=centered(t,y, pageW<190?10.0:10.8,true);});
+  companyLines.forEach(function(t){y=centered(t,y, pageW<190?9.4:10.4,true);});
   y-=1;
   y=centered('FACTURA SIMPLIFICADA',y,titleSize,true);
   y-=2;
@@ -401,8 +401,8 @@ function buildSimplifiedInvoicePDF(x, cfg){
   text('IVA 10 %',margin,y,bodySize,false);
   rightText(money(x.vat).replace('€','EUR'),right,y,bodySize,false); y-=13;
   line(margin,y,right,y,1.2); y-=15;
-  text('TOTAL',margin,y, pageW<190?12.5:13.2,true);
-  rightText(money(x.total).replace('€','EUR'),right,y,pageW<190?12.5:13.2,true); y-=20;
+  text('TOTAL',margin,y, pageW<190?11.5:12.5,true);
+  rightText(money(x.total).replace('€','EUR'),right,y,pageW<190?11.5:12.5,true); y-=20;
 
   centered('IVA incluido - Tipo IVA 10%',y,small,false); y-=9;
   if(cfg.nif){centered('NIF: '+cfg.nif,y,small,false);y-=14;}
