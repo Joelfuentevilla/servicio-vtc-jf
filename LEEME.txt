@@ -1,7 +1,6 @@
-Servicio VTC JF — V31 (corrección de escala para papel térmico de 80 mm)
+Servicio VTC JF - V32
 
-Basada en V30. Se corrige la regla de impresión de la factura simplificada: ahora se declara un tamaño de página explícito de 80 mm × 200 mm y margen cero, y el contenido ocupa el ancho de 80 mm con 3 mm de espacio interior a cada lado. Se mantiene el formato A4 para las facturas completas.
+Basada en V26: recupera la generación directa del PDF (sin window.print ni diálogo A4 de Safari).
+Se aumenta moderadamente la tipografía del ticket simplificado. La factura completa A4 permanece igual.
 
-Instalación/actualización: sustituye en GitHub Pages los archivos de la raíz por los de este ZIP. Después, cierra completamente la app del iPhone y vuelve a abrirla con Internet para que se actualice la caché. Si sigue apareciendo la versión anterior, abre la web en Safari una vez y vuelve a abrir el icono de inicio.
-
-Nota: la altura de página térmica se fija en 200 mm para evitar que Safari ignore la regla de tamaño automático. Si el contenido excepcionalmente supera esa altura, podría pasar a una segunda página. Comprueba primero la vista previa antes de imprimir.
+Actualización: sustituye los archivos de la raíz del repositorio GitHub Pages por estos archivos. Abre la app con conexión para actualizar la caché.
