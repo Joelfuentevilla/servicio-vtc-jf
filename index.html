@@ -332,8 +332,7 @@ function buildFullInvoicePDF(x, cfg){
 
 
 function buildSimplifiedInvoicePDF(x, cfg){
-  // PDF vectorial de 58/80 mm: conserva la generacion directa de V26,
-  // con una maquetacion compacta inspirada en la vista previa de la factura.
+  // Maquetacion vectorial directa heredada de V26. Distribucion corregida para 80 mm.
   var pageW=(Number(cfg.paperWidth)||58)*72/25.4;
   var margin=pageW<190?10:12;
   var right=pageW-margin;
@@ -345,36 +344,46 @@ function buildSimplifiedInvoicePDF(x, cfg){
   }
   function line(x1,y1,x2,y2,w){content+=(w||0.7)+' w\n'+x1.toFixed(2)+' '+y1.toFixed(2)+' m '+x2.toFixed(2)+' '+y2.toFixed(2)+' l S\n';}
   function wrap(txt,maxChars){return wrapPdfText(String(txt||''),maxChars);}
-  function rightText(txt,tx,ty,size,bold){txt=pdfSafeText(txt);var w=txt.length*size*0.50;text(txt,tx-w,ty,size,bold);}
-  function centerText(txt,ty,size,bold){txt=pdfSafeText(txt);var w=txt.length*size*0.50;text(txt,Math.max(margin,(pageW-w)/2),ty,size,bold);}
+  function rightText(txt,tx,ty,size,bold){
+    txt=pdfSafeText(txt);
+    // Helvetica average width is slightly wider than 0.50 for mixed digits/letters.
+    var w=txt.length*size*0.54;
+    text(txt,Math.max(margin,tx-w),ty,size,bold);
+  }
   var compact=pageW<190;
-  var brandSize=compact?10.8:12.2;
-  var titleSize=compact?8.6:9.4;
-  var bodySize=compact?8.1:9.2;
+  var brandSize=compact?10.0:12.2;
+  var titleSize=compact?8.0:9.4;
+  var bodySize=compact?8.0:9.2;
   var smallSize=compact?6.5:7.2;
   var lineH=bodySize+3;
-  var maxChars=compact?36:48;
-  var companyLines=wrap(cfg.issuer||'Servicio VTC JF',compact?31:42);
-  var details=[cfg.nif,cfg.address,[cfg.phone,cfg.email].filter(Boolean).join(' ')].filter(Boolean);
+  var maxChars=compact?34:48;
+  var companyLines=wrap(cfg.issuer||'Servicio VTC JF',compact?27:42);
   var detailLines=[];
-  details.forEach(function(d){wrap(d,compact?43:58).forEach(function(t){detailLines.push(t);});});
+  if(cfg.nif) detailLines.push('NIF: '+cfg.nif);
+  if(cfg.address) wrap(cfg.address,compact?40:58).forEach(function(t){detailLines.push(t);});
+  if(cfg.phone||cfg.email){
+    var contact=[cfg.phone,cfg.email].filter(Boolean).join('  ');
+    wrap(contact,compact?40:58).forEach(function(t){detailLines.push(t);});
+  }
   var clientLines=wrap(x.client||'Consumidor final',maxChars);
   var nifLines=x.clientNif?wrap('NIF: '+x.clientNif,maxChars):[];
   var addressLines=x.clientAddress?wrap(x.clientAddress,maxChars):[];
   var conceptLines=wrap(x.concept||'Servicio de transporte VTC',maxChars);
-  var height=14+companyLines.length*(brandSize+2)+detailLines.length*(smallSize+2)+titleSize+18+16;
-  height+=bodySize+5+clientLines.length*lineH+nifLines.length*(smallSize+2)+addressLines.length*(smallSize+2)+14;
-  height+=bodySize+8+conceptLines.length*lineH+16+bodySize*2+34+smallSize*2+18;
-  var pageH=Math.max(205,height+12);
-  var y=pageH-15;
+  // Calcular la altura según el contenido real para evitar que los bloques se pisen.
+  var height=18+companyLines.length*(brandSize+2)+detailLines.length*(smallSize+2)+titleSize+bodySize*2+24;
+  height+=bodySize+5+clientLines.length*lineH+nifLines.length*(smallSize+2)+addressLines.length*(smallSize+2)+18;
+  height+=bodySize+8+conceptLines.length*lineH+18+lineH*2+42+smallSize+16;
+  var pageH=Math.max(220,height+12);
+  var y=pageH-17;
 
-  // Cabecera: titular destacado, datos fiscales y bloque de factura a la derecha.
+  // Empresa y datos completos arriba a la izquierda.
   companyLines.forEach(function(t){text(t,margin,y,brandSize,true);y-=brandSize+2;});
   detailLines.forEach(function(t){text(t,margin,y,smallSize,false);y-=smallSize+2;});
-  y-=3;
-  rightText('FACTURA SIMPLIFICADA',right,y,titleSize,true);y-=titleSize+3;
+  y-=8;
+  // El título ocupa su propia línea para que nunca quede cortado por el nombre comercial.
+  rightText('FACTURA SIMPLIFICADA',right,y,titleSize,true);y-=titleSize+4;
   rightText('Nº '+x.number,right,y,bodySize,true);y-=bodySize+2;
-  rightText(x.date,right,y,bodySize,true);y-=8;
+  rightText(x.date,right,y,bodySize,true);y-=10;
   line(margin,y,right,y,1.1);y-=16;
 
   text('Cliente',margin,y,bodySize,true);y-=lineH;
@@ -386,22 +395,22 @@ function buildSimplifiedInvoicePDF(x, cfg){
   text('Descripción',margin,y,bodySize,true);
   rightText('Importe',right,y,bodySize,true);y-=8;
   line(margin,y,right,y,0.55);y-=14;
+  var rowStart=y;
   conceptLines.forEach(function(t){text(t,margin,y,bodySize,false);y-=lineH;});
-  rightText(money(x.base),right,y+lineH,bodySize,false);
+  rightText(money(x.base),right,rowStart,bodySize,false);
   y-=4;
   line(margin,y,right,y,0.55);y-=15;
 
-  var labelX=margin+contentW*0.48;
-  text('Base imponible',labelX,y,bodySize,false);
+  // Resumen a dos columnas de ancho completo, sin solapamientos.
+  text('Base imponible',margin,y,bodySize,false);
   rightText(money(x.base),right,y,bodySize,false);y-=lineH;
-  text('IVA 10 %',labelX,y,bodySize,false);
+  text('IVA 10 %',margin,y,bodySize,false);
   rightText(money(x.vat),right,y,bodySize,false);y-=14;
-  line(labelX,y,right,y,1.1);y-=17;
-  text('TOTAL',labelX,y,compact?13:15,true);
-  rightText(money(x.total),right,y,compact?13:15,true);y-=24;
+  line(margin,y,right,y,1.1);y-=17;
+  text('TOTAL',margin,y,compact?12.2:15,true);
+  rightText(money(x.total),right,y,compact?12.2:15,true);y-=25;
 
   text('Base imponible e IVA desglosados. Tipo de IVA aplicado: 10 %.',margin,y,smallSize,false);y-=smallSize+8;
-  if(cfg.nif){text('NIF: '+cfg.nif,margin,y,smallSize,false);y-=smallSize+5;}
   text('Gracias por su confianza',margin,y,smallSize,false);
 
   var objs=[];
@@ -528,7 +537,6 @@ async function printPDF(){
    lines.push({line:true,top:2,size:7});
    lines.push({text:'TOTAL: '+money(current.total),bold:true,size:11,top:1});
    lines.push({text:'IVA incluido - Tipo IVA 10%',center:true,size:6.1,top:5});
-   if(cfg.nif) lines.push({text:'NIF: '+cfg.nif,center:true,size:6.1});
    lines.push({text:'Gracias por su confianza',center:true,size:6.1,top:8});
    blob=buildSimplifiedInvoicePDF(current,cfg);
  }else{

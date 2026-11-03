@@ -1,7 +1,3 @@
-Servicio VTC JF — V26 (caché local primero)
-
-Basado en V25. Se conserva la aplicación y se actualiza el service worker para abrir primero los archivos guardados localmente. Una vez instalada y abierta al menos una vez con Internet, la navegación de la app usa la copia en caché y no necesita contactar con GitHub para abrir la pantalla principal.
-
-IMPORTANTE: esto no convierte la PWA en una app independiente de su origen web. Para instalarla inicialmente y recibir actualizaciones necesita una dirección HTTPS. No despubliques GitHub Pages hasta probar en el iPhone que abre con modo avión y que puedes crear, editar, consultar y exportar facturas. Haz primero una copia de seguridad desde la propia app.
-
-Los datos de facturas y configuración se guardan en el almacenamiento local del navegador (localStorage). Exporta copias de seguridad regularmente.
+V34 - Basada en V26. Se conserva la generación directa del PDF.
+Correcciones: datos del emisor completos con NIF identificado en cabecera, sin NIF duplicado al pie; título sin recortes; resumen y total alineados sin solapamientos. La factura completa A4 conserva su generador original.
+Sube el contenido de esta carpeta a la raíz del repositorio GitHub.
