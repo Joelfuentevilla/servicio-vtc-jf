@@ -373,6 +373,9 @@ function buildSimplifiedInvoicePDF(x, cfg){
   var conceptLines=wrap(x.concept||'Servicio de transporte VTC',maxChars);
   // Calcular la altura según el contenido real para evitar que los bloques se pisen.
   var height=18+companyLines.length*(brandSize+2)+detailLines.length*(smallSize+2)+titleSize+bodySize*2+24;
+  // Reservar altura adicional para la línea de hora y el pie completo.
+  if(x.time) height+=bodySize+2;
+  height+=14;
   height+=bodySize+5+clientLines.length*lineH+nifLines.length*(smallSize+2)+addressLines.length*(smallSize+2)+18;
   height+=bodySize+8+conceptLines.length*lineH+18+lineH*2+42+smallSize+16;
   var pageH=Math.max(220,height+12);
