@@ -114,13 +114,14 @@ function configLoad(){
  $("address").value=cfg.address||"";$("phone").value=cfg.phone||"";$("email").value=cfg.email||"";
  $("prefix").value=cfg.prefix||"VTC-";$("startNo").value=cfg.startNo||1;$("paperWidth").value=String(cfg.paperWidth||58);
 }
+function currentTime(){var d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
 function makeInvoiceFromForm(){
  var t=Number($("price").value)||0;
  if(t<=0){alert("Introduce el precio final.");return null}
  var type=$("invoiceType").value;
  if(type==="completa" && !$("client").value.trim()){alert("Para una factura completa debes introducir el nombre o razón social del cliente.");return null}
  var old=editingId?invoices.find(function(i){return i.id===editingId}):null;
- return {id:editingId||Date.now().toString(),number:old?old.number:$("number").value,date:$("date").value,type:type,
+ return {id:editingId||Date.now().toString(),number:old?old.number:$("number").value,date:$("date").value,time:old?(old.time||""):currentTime(),type:type,
  client:$("client").value,clientNif:$("clientNif").value,clientAddress:$("clientAddress").value,
  concept:$("concept").value||"Servicio de transporte VTC",total:+t.toFixed(2),
  base:+(t/1.10).toFixed(2),vat:+(t-t/1.10).toFixed(2)};
@@ -132,7 +133,7 @@ function invoiceMarkup(x){
  var clientBlock=full
    ? '<div style="margin-top:22px"><b>DATOS DEL CLIENTE</b><br>'+esc(x.client)+'<br>'+esc(x.clientNif)+(x.clientAddress?'<br>'+esc(x.clientAddress):'')+'</div>'
    : '<div style="margin-top:22px"><b>Cliente</b><br>'+esc(x.client||"Consumidor final")+(x.clientNif?'<br>'+esc(x.clientNif):'')+(x.clientAddress?'<br>'+esc(x.clientAddress):'')+'</div>';
- return '<div class="pdfhead"><div><div class="brand">'+issuer+'</div><div class="muted">'+esc(cfg.nif)+'<br>'+esc(cfg.address)+'<br>'+esc(cfg.phone)+' '+esc(cfg.email)+'</div></div><div class="invoiceTitle">'+title+'<br><span class="muted">Nº '+esc(x.number)+'<br>'+esc(x.date)+'</span></div></div>'+
+ return '<div class="pdfhead"><div><div class="brand">'+issuer+'</div><div class="muted">'+esc(cfg.nif)+'<br>'+esc(cfg.address)+'<br>'+esc(cfg.phone)+' '+esc(cfg.email)+'</div></div><div class="invoiceTitle">'+title+'<br><span class="muted">Nº '+esc(x.number)+'<br>'+esc(x.date)+(x.time?'<br>Hora: '+esc(x.time):'')+'</span></div></div>'+
  clientBlock+
  '<table class="invoiceTable"><tr><th>Descripción</th><th>Importe</th></tr><tr><td>'+esc(x.concept)+'</td><td>'+money(x.base)+'</td></tr></table>'+
  '<div class="summary"><div>Base imponible <span style="float:right">'+money(x.base)+'</span></div><div>IVA 10 % <span style="float:right">'+money(x.vat)+'</span></div><div class="grand">TOTAL <span style="float:right">'+money(x.total)+'</span></div></div>'+
@@ -276,6 +277,7 @@ function buildFullInvoicePDF(x, cfg){
   text(title,405,785,18,true);
   text('N. '+x.number,405,760,10,false);
   text(x.date,405,744,10,false);
+  if(x.time) text('Hora: '+x.time,405,730,10,false);
 
   line(margin,700,right,700,2.2);
 
@@ -383,7 +385,9 @@ function buildSimplifiedInvoicePDF(x, cfg){
   // El título ocupa su propia línea para que nunca quede cortado por el nombre comercial.
   rightText('FACTURA SIMPLIFICADA',right-8,y,titleSize,true);y-=titleSize+4;
   rightText('Nº '+x.number,right,y,bodySize,true);y-=bodySize+2;
-  rightText(x.date,right,y,bodySize,true);y-=10;
+  rightText(x.date,right,y,bodySize,true);y-=bodySize+2;
+  if(x.time){rightText('Hora: '+x.time,right,y,bodySize,true);y-=bodySize+2;}
+  y-=6;
   line(margin,y,right,y,1.1);y-=16;
 
   text('Cliente',margin,y,bodySize,true);y-=lineH;
@@ -462,6 +466,7 @@ function buildFullInvoicePDF(x, cfg){
   text(title,405,785,18,true);
   text('N. '+x.number,405,760,10,false);
   text(x.date,405,744,10,false);
+  if(x.time) text('Hora: '+x.time,405,730,10,false);
 
   line(margin,700,right,700,2.2);
 
@@ -530,6 +535,7 @@ async function printPDF(){
    lines.push({line:true,top:2,size:7});
    lines.push({text:'N. '+current.number,bold:true,size:7.1,top:1});
    lines.push({text:'Fecha: '+current.date,bold:true,size:7.1});
+   if(current.time) lines.push({text:'Hora: '+current.time,bold:true,size:7.1});
    lines.push({line:true,top:2,size:7});
    lines.push({text:'Servicio: '+current.concept,bold:true,size:7.1,top:1});
    lines.push({text:'Base imponible                 '+money(current.base),size:7.0});
